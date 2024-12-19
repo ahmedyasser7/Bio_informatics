@@ -27,7 +27,7 @@ st.markdown("""
 # Sidebar navigation
 st.sidebar.title("Bio content")
 page = st.sidebar.radio(
-    "Select a page:", ["Home", "Data upload", "Apply an Algorithm", "Algorithms", "Contact Us"])
+    "Select a page:", ["Home", "Data upload", "Apply an Algorithm", "pattern_text_algorithm", "Contact Us"])
 
 # Function for Home page
 
@@ -41,7 +41,7 @@ def home_page():
     st.markdown("""---""")
 
 
-def Algorithms():
+def pattern_text_algorithm():
     st.title("Try Our Algorithms ")
     algo = st.selectbox("choose what you want : ", [
                         "translation", "naive_match", "boyer_moore", "IndexSorted", "suffix_array", "overlap"])
@@ -317,7 +317,7 @@ def Algorithms():
 
 # Function for Data Upload page
 def data_upload_page():
-    st.title("Data Upload")
+    st.title("Upload Data file")
 
     uploaded_file = st.file_uploader(
         "Upload your file (CSV, FASTA, FNA, or TEXT):",
@@ -433,10 +433,18 @@ def algorithm_apply():
             st.text("Base Counts:")
             st.json(counts)
             
-        # elif algorithm == "naive_match":
-        #     result = naive_match(selected_sequence)
-        #     st.text("Naive Match Result:")
-        #     st.json(result)
+        elif algorithm == "naive_match":
+            result = selected_sequence
+            
+            target = st.text_input("Enter your pattern:")
+            naive_button = st.button("Enter!")
+            
+            if naive_button == 'OK':
+                st.text("Naive Match Result:")
+                st.write("the index that occur match on is :")
+                for i in range(len(result) - len(target) + 1):
+                    if result[i:i+len(target)] == target:
+                        st.write(i, " ")
             
         # elif algorithm == "boyer_moore":
         #     result = boyer_moore(selected_sequence)
@@ -491,7 +499,7 @@ elif page == "Data upload":
     data_upload_page()
 elif page == "Apply an Algorithm":
     algorithm_apply()
-elif page == "Algorithms":
-    Algorithms()
+elif page == "pattern_text_algorithm":
+    pattern_text_algorithm()
 elif page == "Contact Us":
     contact_page()
