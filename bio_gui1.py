@@ -27,7 +27,7 @@ st.markdown("""
 # Sidebar navigation
 st.sidebar.title("Bio content")
 page = st.sidebar.radio(
-    "Select a page:", ["Home", "Data upload", "Apply an Algorithm", "pattern_text_algorithm", "Contact Us"])
+    "Select a page:", ["Home", "Data upload", "Apply on file", "Apply for pattern", "Contact Us"])
 
 # Function for Home page
 
@@ -41,7 +41,7 @@ def home_page():
     st.markdown("""---""")
 
 
-def pattern_text_algorithm():
+def apply_for_pattern():
     st.title("Try Our Algorithms ")
     algo = st.selectbox("choose what you want : ", [
                         "translation", "naive_match", "boyer_moore", "IndexSorted", "suffix_array", "overlap"])
@@ -564,7 +564,7 @@ elif page == "Data upload":
     data_upload_page()
 elif page == "Apply an Algorithm":
     algorithm_apply()
-elif page == "pattern_text_algorithm":
-    pattern_text_algorithm()
+elif page == "Apply for pattern":
+    apply_for_pattern()
 elif page == "Contact Us":
     contact_page()
