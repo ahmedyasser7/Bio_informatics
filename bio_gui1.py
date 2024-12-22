@@ -320,22 +320,15 @@ def data_upload_page():
     st.title("Upload Data file")
 
     uploaded_file = st.file_uploader(
-        "Upload your file (CSV, FASTA, FNA, or TEXT):",
-        type=["csv", "fasta", "fna", "txt"]
+        "Upload your file (FASTA or TEXT):",
+        type=["fasta", "txt"]
     )
 
     if uploaded_file:
         file_type = uploaded_file.name.split(".")[-1].lower()  # To get the file extension
 
-        # CSV Files
-        if file_type == "csv":
-            data = pd.read_csv(uploaded_file)
-            st.write("Here's a preview of your CSV data:")
-            st.dataframe(data.head())
-            st.session_state["uploaded_data"] = data
-
-        # FASTA or FNA Files
-        elif file_type in ["fasta", "fna"]:
+        # FASTA Files
+        if file_type in ["fasta"]:
             st.write(f"Here's the content of your {file_type.upper()} file:")
             fasta_content = {}
             current_seq = ""
@@ -399,10 +392,10 @@ def algorithm_apply():
         return
 
     # Select File Type
-    file_type = st.radio("Choose the type of uploaded data:", options=["CSV", "FASTA/FNA", "Text"])
+    file_type = st.radio("Choose the type of uploaded data:", options=["FASTA", "Text"])
 
     selected_sequence = None
-    if file_type == "FASTA/FNA" and "fasta_data" in st.session_state:
+    if file_type == "FASTA" and "fasta_data" in st.session_state:
         fasta_data = st.session_state["fasta_data"]
         sequence_name = st.selectbox("Choose a sequence:", options=list(fasta_data.keys()))
         selected_sequence = fasta_data[sequence_name]
