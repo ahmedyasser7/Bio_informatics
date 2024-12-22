@@ -401,6 +401,7 @@ def algorithm_apply():
     # Select File Type
     file_type = st.radio("Choose the type of uploaded data:", options=["CSV", "FASTA/FNA", "Text"])
 
+    selected_sequence = None
     if file_type == "FASTA/FNA" and "fasta_data" in st.session_state:
         fasta_data = st.session_state["fasta_data"]
         sequence_name = st.selectbox("Choose a sequence:", options=list(fasta_data.keys()))
@@ -422,59 +423,130 @@ def algorithm_apply():
     # Choose Algorithm
     algorithm = st.selectbox("Choose an algorithm to apply:", options=["Reverse Sequence", "Count Bases", "naive_match", "boyer_moore", "IndexSorted", "suffix_array", "overlap"])
 
-    if st.button("Apply Algorithm"):
-        if algorithm == "Reverse Sequence":
-            result = selected_sequence[::-1]
-            st.text("Reversed Sequence:")
-            st.code(result)
-            
-        elif algorithm == "Count Bases":
-            counts = {base: selected_sequence.count(base) for base in "ACGT"}
-            st.text("Base Counts:")
-            st.json(counts)
-            
-        elif algorithm == "naive_match":
-            result = selected_sequence
-            
-            target = st.text_input("Enter your pattern:")
-            naive_button = st.button("Enter!")
-            
-            if naive_button == 'OK':
+    # Move input fields outside the main button condition
+    if algorithm == "naive_match":
+        target = st.text_input("Enter your pattern:")
+        if st.button("Find Matches", key="naive_match_button"):
+            if target and selected_sequence:
                 st.text("Naive Match Result:")
-                st.write("the index that occur match on is :")
-                for i in range(len(result) - len(target) + 1):
-                    if result[i:i+len(target)] == target:
-                        st.write(i, " ")
-            
-        # elif algorithm == "boyer_moore":
-        #     result = boyer_moore(selected_sequence)
-        #     st.text("Boyer-Moore Result:")
-        #     st.code(result)
-            
-        # elif algorithm == "IndexSorted":
-        #     result = index_sorted(selected_sequence)
-        #     st.text("Index Sorted Result:")
-        #     st.json(result)
-            
-        # elif algorithm == "suffix_array":
-        #     result = suffix_array(selected_sequence)
-        #     st.text("Suffix Array Result:")
-        #     st.json(result)
-            
-        # elif algorithm == "overlap":
-        #     # For overlap, you need a second sequence; mock example assumes one.
-        #     other_sequence = st.text_area("Enter another sequence for overlap:", value="")
-        #     if other_sequence:
-        #         result = overlap(selected_sequence, other_sequence)
-        #         st.text("Overlap Result:")
-        #         st.code(result)
-        #     else:
-        #         st.warning("Please enter another sequence for overlap.")
-            
-        else:
-            st.warning("Please, Choose one of them!")
+                st.write("Matches found at indices:")
+                matches = []
+                for i in range(len(selected_sequence) - len(target) + 1):
+                    if selected_sequence[i:i+len(target)] == target:
+                        matches.append(i)
+                if matches:
+                    st.write(matches)
+                else:
+                    st.write("No matches found")
+            else:
+                st.warning("Please enter a pattern to search for")
 
+    elif algorithm == "boyer_moore":
+        target = st.text_input("Enter your pattern:", key="boyer_pattern")
+        if st.button("Find Matches", key="boyer_button"):
+            if target and selected_sequence:
+                def build_bad_char_table(pattern):
+                    bad_char = {}
+                    for i in range(len(pattern)):
+                        bad_char[pattern[i]] = i
+                    return bad_char
 
+                def boyer_moore_search(text, pattern):
+                    matches = []
+                    if not pattern or not text:
+                        return matches
+                    bad_char = build_bad_char_table(pattern)
+                    m = len(pattern)
+                    n = len(text)
+                    i = 0
+                    while i <= n - m:
+                        j = m - 1
+                        while j >= 0 and pattern[j] == text[i + j]:
+                            j -= 1
+                        if j < 0:
+                            matches.append(i)
+                            i += 1
+                        else:
+                            bad_char_shift = j - bad_char.get(text[i + j], -1)
+                            i += max(1, bad_char_shift)
+                    return matches
+
+                matches = boyer_moore_search(selected_sequence, target)
+                st.text("Boyer-Moore Result:")
+                if matches:
+                    st.write(f"Pattern found at indices: {matches}")
+                else:
+                    st.write("No matches found")
+            else:
+                st.warning("Please enter a pattern to search for")
+
+    elif algorithm == "IndexSorted":
+        k = st.number_input("Enter k-mer length:", min_value=1, 
+                          max_value=len(selected_sequence) if selected_sequence else 10, 
+                          value=3)
+        if st.button("Generate k-mers", key="index_sorted_button"):
+            if selected_sequence:
+                kmers = []
+                for i in range(len(selected_sequence) - k + 1):
+                    kmer = selected_sequence[i:i+k]
+                    kmers.append((kmer, i))
+                kmers.sort()
+                st.text("Sorted k-mers and their positions:")
+                for kmer, pos in kmers:
+                    st.write(f"k-mer: {kmer}, position: {pos}")
+
+    elif algorithm == "suffix_array":
+        if st.button("Generate Suffix Array", key="suffix_button"):
+            if selected_sequence:
+                suffixes = [(selected_sequence[i:], i) for i in range(len(selected_sequence))]
+                suffixes.sort()
+                suffix_array = [pos for (suffix, pos) in suffixes]
+                st.text("Suffix Array Result:")
+                st.write("Positions in sorted order:")
+                st.write(suffix_array)
+                st.text("Corresponding suffixes:")
+                for pos in suffix_array:
+                    st.write(f"{pos}: {selected_sequence[pos:]}")
+
+    elif algorithm == "overlap":
+        min_overlap = st.number_input("Minimum overlap length:", 
+                                    min_value=1, value=3)
+        other_sequence = st.text_area("Enter another sequence for overlap:")
+        if st.button("Find Overlap", key="overlap_button"):
+            if other_sequence and selected_sequence:
+                def find_overlap(seq1, seq2, min_len):
+                    for i in range(len(seq1), min_len-1, -1):
+                        if seq2.startswith(seq1[-i:]):
+                            return i
+                    return 0
+
+                overlap_length = find_overlap(selected_sequence, other_sequence, min_overlap)
+                if overlap_length > 0:
+                    st.text(f"Found overlap of length {overlap_length}")
+                    st.text("Overlapping region:")
+                    st.code(selected_sequence[-overlap_length:])
+                else:
+                    st.write(f"No overlap of length ≥{min_overlap} found")
+            else:
+                st.warning("Please enter a sequence for overlap comparison")
+
+    # Handle simple algorithms with a single button
+    elif algorithm in ["Reverse Sequence", "Count Bases"]:
+        if st.button("Apply Algorithm", key="simple_algorithm"):
+            if not selected_sequence:
+                st.error("Please select a sequence first!")
+                return
+
+            if algorithm == "Reverse Sequence":
+                result = selected_sequence[::-1]
+                st.text("Reversed Sequence:")
+                st.code(result)
+                
+            elif algorithm == "Count Bases":
+                counts = {base: selected_sequence.count(base) for base in "ACGT"}
+                st.text("Base Counts:")
+                st.json(counts)
+                
 # Function for Contact Us page
 def contact_page():
     st.title("Contact Us")
