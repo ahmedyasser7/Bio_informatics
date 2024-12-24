@@ -44,7 +44,7 @@ def home_page():
 def apply_for_pattern():
     st.title("Try Our Algorithms ")
     algo = st.selectbox("choose what you want : ", [
-                        "translation", "naive_match", "boyer_moore", "IndexSorted", "suffix_array", "overlap", "translation_table"])
+        "translation", "naive_match", "boyer_moore", "IndexSorted", "suffix_array", "overlap", "translation_table"])
     if algo == "translation":
         st.header("FASTA File/Sequence Translation")
         st.write(
@@ -53,11 +53,26 @@ def apply_for_pattern():
         fasta_input = st.text_area(
             "Paste your FASTA-like text here:", height=200)
         process_type = st.selectbox("Choose Process Type:", [
-                                    "Sequence Extraction", "GC Content Calculation", "Table Export", "complement"])
+            "Sequence Extraction", "GC Content Calculation", "Table Export", "complement", "reverse", "reverse complement"])
 
         if fasta_input:
             tb = []  # For storing processed data
             lines = fasta_input.strip().split("\n")  # Split input into lines
+
+            # Helper functions
+            def Complement(seq):
+                dic = {"G": "C", "C": "G", "A": "T", "T": "A"}
+                s = list(seq)
+                for i in range(len(seq)):
+                    s[i] = dic.get(seq[i], seq[i])  # Handle unexpected characters
+                return "".join(s)  # Join the list back into a string
+
+            def Reverse(seq):
+                return seq[::-1]  # Pythonic way to reverse a string
+
+            def Reverse_Complement(seq):
+                reversed_seq = Reverse(seq)
+                return Complement(reversed_seq)
 
             # Process input based on user choice
             if process_type == "Sequence Extraction":
@@ -113,32 +128,52 @@ def apply_for_pattern():
                     file_name="processed_fasta_data.csv",
                     mime="text/csv"
                 )
-            elif process_type == "complement":
-                def Complement(seq):
-                    dic = {"G": "C", "C": "G", "A": "T", "T": "A"}
-                    s = list(seq)
-                    for i in range(len(seq)):
-                        s[i] = dic[seq[i]]
-                    s = "".join(s)  # Join the list back into a string
-                    return s
 
+            elif process_type == "complement":
                 st.subheader("Complement Results:")
-                tb = []  # For storing complemented sequences
                 for i in range(0, len(lines), 2):
                     header = lines[i][1:]  # Remove ">"
                     sequence = lines[i + 1]
-                    complemented_sequence = Complement(
-                        sequence)  # Get the complemented sequence
+                    complemented_sequence = Complement(sequence)
                     st.write(f"Text: {sequence}")
-                    # Display result
-                    st.write(f" Complement: {complemented_sequence}")
-                    # Store result in table
+                    st.write(f"Complement: {complemented_sequence}")
                     tb.append([sequence, complemented_sequence])
 
                 # Display the table of complemented sequences
                 st.write("Processed Complement Table:")
-                df = pd.DataFrame(tb, columns=["sequence", "Complement"])
+                df = pd.DataFrame(tb, columns=["Sequence", "Complement"])
                 st.dataframe(df)
+
+            elif process_type == "reverse":
+                st.subheader("Reverse Results:")
+                for i in range(0, len(lines), 2):
+                    header = lines[i][1:]  # Remove ">"
+                    sequence = lines[i + 1]
+                    reversed_sequence = Reverse(sequence)
+                    st.write(f"Text: {sequence}")
+                    st.write(f"Reversed: {reversed_sequence}")
+                    tb.append([sequence, reversed_sequence])
+
+                # Display the table of reversed sequences
+                st.write("Processed Reverse Table:")
+                df = pd.DataFrame(tb, columns=["Sequence", "Reverse"])
+                st.dataframe(df)
+
+            elif process_type == "reverse complement":
+                st.subheader("Reverse Complement Results:")
+                for i in range(0, len(lines), 2):
+                    header = lines[i][1:]  # Remove ">"
+                    sequence = lines[i + 1]
+                    reverse_complemented_sequence = Reverse_Complement(sequence)
+                    st.write(f"Text: {sequence}")
+                    st.write(f"Reverse Complement: {reverse_complemented_sequence}")
+                    tb.append([sequence, reverse_complemented_sequence])
+
+                # Display the table of reverse complemented sequences
+                st.write("Processed Reverse Complement Table:")
+                df = pd.DataFrame(tb, columns=["Sequence", "Reverse_Complement"])
+                st.dataframe(df)
+
 
     if algo == "translation_table":
         def Translation_Table(seq):
